@@ -1,0 +1,36 @@
+# Service Account with IAM Role annotation for Staging environment
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: rds-access-sa
+  namespace: staging
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::<account-id>:role/<rds-access-role>
+
+# Example Pod Spec using the Service Account
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app-staging
+  namespace: staging
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: app-staging
+  template:
+    metadata:
+      labels:
+        app: app-staging
+    spec:
+      serviceAccountName: rds-access-sa  # Attach the Service Account with IAM Role
+      containers:
+        - name: app
+          image: myapp-image
+          env:
+            - name: RDS_ENDPOINT
+              valueFrom:
+                secretKeyRef:
+                  name: rds-endpoint  # Optional: Set up RDS endpoint as environment var if needed
+                  key: endpoint

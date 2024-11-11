@@ -1,0 +1,55 @@
+apiVersion: secrets-store.csi.x-k8s.io/v1
+kind: SecretProviderClass
+metadata:
+  name: aws-secrets-provider-staging
+  namespace: staging
+spec:
+  provider: aws
+  parameters:
+    objects: |
+      - objectName: "rds-staging-credentials"
+        objectType: "secretsmanager"
+---
+apiVersion: secrets-store.csi.x-k8s.io/v1
+kind: SecretProviderClass
+metadata:
+  name: aws-secrets-provider-production
+  namespace: production
+spec:
+  provider: aws
+  parameters:
+    objects: |
+      - objectName: "rds-production-credentials"
+        objectType: "secretsmanager"
+
+# Pod Spec Example for Staging (to mount RDS credentials as a volume)
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app-staging
+  namespace: staging
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: app-staging
+  template:
+    metadata:
+      labels:
+        app: app-staging
+    spec:
+      containers:
+        - name: app
+          image: myapp-image
+          volumeMounts:
+            - name: rds-secrets
+              mountPath: "/mnt/secrets"
+              readOnly: true
+      volumes:
+        - name: rds-secrets
+          csi:
+            driver: secrets-store.csi.k8s.io
+            readOnly: true
+            volumeAttributes:
+              secretProviderClass: "aws-secrets-provider-staging"

@@ -1,0 +1,112 @@
+# Namespaces for Staging and Production
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: staging
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: production
+
+# Developer Role for Staging Namespace
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  namespace: staging
+  name: developer
+rules:
+  - apiGroups: [""]
+    resources: ["*"]
+    verbs: ["*"]
+
+# Admin Role for Staging and Production Namespaces
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  namespace: staging
+  name: admin
+rules:
+  - apiGroups: [""]
+    resources: ["*"]
+    verbs: ["*"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  namespace: production
+  name: admin
+rules:
+  - apiGroups: [""]
+    resources: ["*"]
+    verbs: ["*"]
+
+# Service Accounts for Developer and Admin in Staging Namespace
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: developer-sa
+  namespace: staging
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: admin-sa
+  namespace: staging
+
+# Service Account for Admin in Production Namespace
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: admin-sa
+  namespace: production
+
+# RoleBinding for Developer in Staging Namespace
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: developer-binding
+  namespace: staging
+subjects:
+  - kind: ServiceAccount
+    name: developer-sa
+    namespace: staging
+roleRef:
+  kind: Role
+  name: developer
+  apiGroup: rbac.authorization.k8s.io
+
+# RoleBindings for Admin in Staging and Production
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: admin-binding
+  namespace: staging
+subjects:
+  - kind: ServiceAccount
+    name: admin-sa
+    namespace: staging
+roleRef:
+  kind: Role
+  name: admin
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: admin-binding
+  namespace: production
+subjects:
+  - kind: ServiceAccount
+    name: admin-sa
+    namespace: production
+roleRef:
+  kind: Role
+  name: admin
+  apiGroup: rbac.authorization.k8s.io
